@@ -44,7 +44,7 @@ summary(fit1)
 #JobInvolvement                  -0.071636   0.013475  -5.316 1.27e-07 ***
 #OverTimeYes                      0.200671   0.021355   9.397  < 2e-16 ***
 #TotalWorkingYears               -0.009250   0.001783  -5.188 2.51e-07 ***
-fit1 <- lm(isAttrition~MaritalStatus + MaritalStatus:JobInvolvement + EnvironmentSatisfaction + JobInvolvement + OverTime + TotalWorkingYears, data = df)
+fit1 <- lm(isAttrition~MaritalStatus + EnvironmentSatisfaction + JobInvolvement + OverTime + TotalWorkingYears, data = df)
 summary(fit1)
 
 
