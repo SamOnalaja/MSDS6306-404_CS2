@@ -6,63 +6,80 @@ output: html_document
 ---
 
 ```{r}
+library(caret)
+library(MASS)
+
 #Reads in the files
 df <- read.csv("csv/CaseStudy2-data.csv")
-df.test <- read.csv("csv/CaseStudy2Validation.csv")
+testset <- read.csv("csv/CaseStudy2Validation.csv")
 
-#Not necessary in model:
-#ID, EmployeeNumber, Over18, Rand (what is that?), StandardHours, EmployeeCount
-table(df$Attrition)
+#Converts Attrition to TRUE/FALSE instead of Yes/No to fix glm warning
+df$Attrition <- ifelse(df$Attrition == "Yes", TRUE, FALSE)
+testset$Attrition <- ifelse(testset$Attrition == "Yes", TRUE, FALSE)
 
-#Converted Attrition to TRUE/FALSE instead of Yes/No so it could be used with lm
-df$isAttrition <- ifelse(df$Attrition == "Yes", TRUE, FALSE)
-
-#Plotting everything
-pairs(df[,c(3,2,4:8)])#DailyRate
-pairs(df[,c(3,9:16)])
-pairs(df[,c(3,17:23)])#MonthlyIncome
-pairs(df[,c(3,24:30)])#TotalWorkingYears
-pairs(df[,c(3,31:38)])
-#YearsAtCompany, YearsInCurrentRole, YearsSinceLastPromotion, YearsWithCurrManager, 
-
-
-#PROBLEM 1, Determine factors that lead to attrition+++++++++++++++++++++++++++++++++
-#KNN
-#The probability thing from HW 10/11 with "is a newspaper News or Other?""
-#Linear Regression, probably not
-#Not a time series, so no SES/Holt
-
-#Linear Regression with all-----------------------------------------------
-fit1 <- lm(isAttrition~Age + BusinessTravel + DailyRate + Department + DistanceFromHome + Education + EducationField + EmployeeCount + EnvironmentSatisfaction + Gender + HourlyRate + JobInvolvement + JobLevel + JobRole + JobSatisfaction + MaritalStatus + MonthlyIncome + MonthlyRate + NumCompaniesWorked + OverTime + PercentSalaryHike + PerformanceRating + RelationshipSatisfaction + StandardHours + StockOptionLevel + TotalWorkingYears + TrainingTimesLastYear + WorkLifeBalance + YearsAtCompany + YearsInCurrentRole + YearsSinceLastPromotion + YearsWithCurrManager, data = df)
-
-#Just eliminated all factors that are supposably unimportant (from a p-value perspective)
-fit1 <- lm(isAttrition~BusinessTravel + DistanceFromHome + EnvironmentSatisfaction + Gender + JobInvolvement + JobSatisfaction + MaritalStatus + NumCompaniesWorked + OverTime + RelationshipSatisfaction + TotalWorkingYears + WorkLifeBalance + YearsAtCompany + YearsInCurrentRole + YearsSinceLastPromotion + YearsWithCurrManager, data = df)
-summary(fit1)
-
-#MaritalStatusSingle              0.157432   0.026499   5.941 3.74e-09 ***
-#EnvironmentSatisfaction         -0.046403   0.008831  -5.254 1.77e-07 ***
-#JobInvolvement                  -0.071636   0.013475  -5.316 1.27e-07 ***
-#OverTimeYes                      0.200671   0.021355   9.397  < 2e-16 ***
-#TotalWorkingYears               -0.009250   0.001783  -5.188 2.51e-07 ***
-fit1 <- lm(isAttrition~MaritalStatus + EnvironmentSatisfaction + JobInvolvement + OverTime + TotalWorkingYears, data = df)
-summary(fit1)
-
-
-#KNN ------------------------------------------------------------
-library(caret)
-library(mlr)
-
-#Loop through to find the best k value
-for(i in seq(1, 99, 2) ) #only the odd values
+#Creates the prediction and sets the values to Yes/No
+predictyn <- function(fit, test)
 {
-  #fit.knn <- knnreg(isAttrition~ <X VALUES GO HERE>, data = df, k = i)
-  
-  #fitknn <- predict(fit.tx3, TestTX)
-  
-  #TestTX.ASE3 <- sum( (fitknn - TestTX$ABV)^2 )/length(TestTX$ABV)
-  #TestTX.ASE3
+  p1 <- ifelse(predict(fit, test) > 0.5, TRUE, FALSE)
+  p1
 }
 
+#-------------Plotting everything... why?... why not-------------
+pairs(df[,c(3,2,4:8)])
+pairs(df[,c(3,9:16)])
+pairs(df[,c(3,17:23)])
+pairs(df[,c(3,24:30)])
+pairs(df[,c(3,31:38)])
 
+#--------------------All of the column names------------
+#Age + BusinessTravel + DailyRate + Department + DistanceFromHome + Education + EducationField + EmployeeCount + EnvironmentSatisfaction + Gender + HourlyRate + JobInvolvement + JobLevel + JobRole + JobSatisfaction + MaritalStatus + MonthlyIncome + MonthlyRate + NumCompaniesWorked + OverTime + PercentSalaryHike + PerformanceRating + RelationshipSatisfaction + StandardHours + StockOptionLevel + TotalWorkingYears + TrainingTimesLastYear + WorkLifeBalance + YearsAtCompany + YearsInCurrentRole + YearsSinceLastPromotion + YearsWithCurrManager
+
+#Not necessary in model:
+#ID, EmployeeNumber, Over18, Rand (what even is that?), StandardHours, EmployeeCount
+
+#dfc is the cleaned data (gets rid of factor with only 1 level)
+dfc <- df
+dfc$Over18 <- NULL
+
+#-------------Cross Validation------------------
+set.seed(1)
+train_perc <- 0.5
+samplesize <- length(df$Attrition)
+train_indices = sample(seq(1, samplesize,length = samplesize), train_perc*samplesize)
+dfc.train <- dfc[train_indices,]
+dfc.test <- dfc[-train_indices,]
+
+#Automatically selecting explainatory variables
+full.model <- glm(Attrition~., data = dfc.train, family="binomial")
+
+#Stepwise
+step.model <- stepAIC(full.model, direction = c("both"), trace=FALSE)
+
+#Backward
+back.model <- stepAIC(full.model, direction = c("backward"), trace=FALSE)
+
+#Forward
+forw.model <- stepAIC(full.model, direction = c("forward"), trace=FALSE)
+
+#Custom
+cust.model <- glm(Attrition~Age + BusinessTravel + DailyRate + Department + DistanceFromHome + Education + EducationField + EmployeeCount + EnvironmentSatisfaction + Gender + HourlyRate + JobInvolvement + JobLevel + JobRole + JobSatisfaction + MaritalStatus + MonthlyIncome + MonthlyRate + NumCompaniesWorked + OverTime + PercentSalaryHike + PerformanceRating + RelationshipSatisfaction + StandardHours + StockOptionLevel + TotalWorkingYears + TrainingTimesLastYear + WorkLifeBalance + YearsAtCompany + YearsInCurrentRole + YearsSinceLastPromotion + YearsWithCurrManager, data = dfc.train, family="binomial")
+
+#Tests the models
+#WARNING: prediction from a rank-deficient fit may be misleading
+#indicates that we have to many explainatory variables (i think)
+pred.cust <- as.vector(predictyn(cust.model, dfc.test))
+pred.step <- as.vector(predictyn(step.model, dfc.test))
+pred.back <- as.vector(predictyn(back.model, dfc.test))
+pred.forw <- as.vector(predictyn(forw.model, dfc.test))
+
+#Creates the confusion matrix with all those stats
+cust.mat <- confusionMatrix(table(dfc.test$Attrition, pred.cust))
+step.mat <- confusionMatrix(table(dfc.test$Attrition, pred.step))
+back.mat <- confusionMatrix(table(dfc.test$Attrition, pred.back))
+forw.mat <- confusionMatrix(table(dfc.test$Attrition, pred.forw))
+
+#Prints out just the accuracy % of the models
+acc <- as.data.frame(cbind(cust.mat$overall[1]*100, step.mat$overall[1]*100, back.mat$overall[1]*100, forw.mat$overall[1]*100))
+names(acc) <- c("Custom", "Stepwise", "Backward", "Forward")
 
 ```
