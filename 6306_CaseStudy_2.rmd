@@ -13,14 +13,14 @@ library(MASS)
 df <- read.csv("csv/CaseStudy2-data.csv")
 testset <- read.csv("csv/CaseStudy2Validation.csv")
 
-#Converts Attrition to TRUE/FALSE instead of Yes/No to fix glm warning
-df$Attrition <- ifelse(df$Attrition == "Yes", TRUE, FALSE)
-testset$Attrition <- ifelse(testset$Attrition == "Yes", TRUE, FALSE)
+#Sets the reference level to No so that it is predicting Yes
+df$Attrition <- relevel(df$Attrition, ref = "No")
+testset$Attrition <- relevel(testset$Attrition, ref = "No")
 
 #Creates the prediction and sets the values to Yes/No
 predictyn <- function(fit, test)
 {
-  p1 <- ifelse(predict(fit, test) > 0.5, TRUE, FALSE)
+  p1 <- ifelse(predict(fit, test) > 0.5, "Yes", "No")
   p1
 }
 
@@ -81,5 +81,6 @@ forw.mat <- confusionMatrix(table(dfc.test$Attrition, pred.forw))
 #Prints out just the accuracy % of the models
 acc <- as.data.frame(cbind(cust.mat$overall[1]*100, step.mat$overall[1]*100, back.mat$overall[1]*100, forw.mat$overall[1]*100))
 names(acc) <- c("Custom", "Stepwise", "Backward", "Forward")
+acc
 
 ```
