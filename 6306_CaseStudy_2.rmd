@@ -8,6 +8,8 @@ output: html_document
 ```{r}
 library(caret)
 library(MASS)
+library(lattice)
+
 
 #Reads in the files
 df <- read.csv("csv/CaseStudy2-data.csv")
@@ -29,7 +31,7 @@ pairs(df[,c(3,2,4:8)])
 pairs(df[,c(3,9:16)])
 pairs(df[,c(3,17:23)])
 pairs(df[,c(3,24:30)])
-pairs(df[,c(3,31:38)])
+pairs(df[,c(3,31:37)])
 
 #--------------------All of the column names------------
 #Age + BusinessTravel + DailyRate + Department + DistanceFromHome + Education + EducationField + EmployeeCount + EnvironmentSatisfaction + Gender + HourlyRate + JobInvolvement + JobLevel + JobRole + JobSatisfaction + MaritalStatus + MonthlyIncome + MonthlyRate + NumCompaniesWorked + OverTime + PercentSalaryHike + PerformanceRating + RelationshipSatisfaction + StandardHours + StockOptionLevel + TotalWorkingYears + TrainingTimesLastYear + WorkLifeBalance + YearsAtCompany + YearsInCurrentRole + YearsSinceLastPromotion + YearsWithCurrManager
@@ -44,12 +46,12 @@ dfc$Over18 <- NULL
 #-------------Cross Validation------------------
 set.seed(1)
 train_perc <- 0.5
-samplesize <- length(df$Attrition)
+samplesize <- length(dfc$Attrition)
 train_indices = sample(seq(1, samplesize,length = samplesize), train_perc*samplesize)
 dfc.train <- dfc[train_indices,]
 dfc.test <- dfc[-train_indices,]
 
-#Automatically selecting explainatory variables
+#Automatically selecting explanatory variables
 full.model <- glm(Attrition~., data = dfc.train, family="binomial")
 
 #Stepwise
@@ -65,8 +67,7 @@ forw.model <- stepAIC(full.model, direction = c("forward"), trace=FALSE)
 cust.model <- glm(Attrition~Age + BusinessTravel + DailyRate + Department + DistanceFromHome + Education + EducationField + EmployeeCount + EnvironmentSatisfaction + Gender + HourlyRate + JobInvolvement + JobLevel + JobRole + JobSatisfaction + MaritalStatus + MonthlyIncome + MonthlyRate + NumCompaniesWorked + OverTime + PercentSalaryHike + PerformanceRating + RelationshipSatisfaction + StandardHours + StockOptionLevel + TotalWorkingYears + TrainingTimesLastYear + WorkLifeBalance + YearsAtCompany + YearsInCurrentRole + YearsSinceLastPromotion + YearsWithCurrManager, data = dfc.train, family="binomial")
 
 #Tests the models
-#WARNING: prediction from a rank-deficient fit may be misleading
-#indicates that we have to many explainatory variables (i think)
+#'WARNING: prediction from a rank-deficient fit may be misleading' suggest that we have too many explanatory variables
 pred.cust <- as.vector(predictyn(cust.model, dfc.test))
 pred.step <- as.vector(predictyn(step.model, dfc.test))
 pred.back <- as.vector(predictyn(back.model, dfc.test))

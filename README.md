@@ -1,4 +1,4 @@
-# MSDS6306-404_CS2
+﻿# MSDS6306-404_CS2
 Case Study 2 - DDS Analytics
 
 Objective: Predict employee turnover for talent management by conducting analysis of existing employee data
@@ -10,9 +10,9 @@ Objective: Predict employee turnover for talent management by conducting analysi
 6) Build a model to predict attrition
 
 Deliverables:
-1) A model that will attain at least 60% accuracy for the training and the validation set 
-2) A prediction file, “Case2PredictionsXXXX.csv”, ordered by ID where 'XXXX' is (individual or team members') last name?
+1) A model that will attain at least 60% overall accuracy for the training and the validation set 
+2) One prediction file, “Case2PredictionsXXXX.csv”, ordered by ID where 'XXXX' with all team members'last name
 3) RMarkdown file containing an executive summary, introduction to project, code and analysis
-4) Group presentation slides (one deck per team?)
-5) Link to YouTube recording in RMarkdown file (joint or individual recording?) 
+4) Individual presentation slide deck
+5) Individual link to YouTube recording in RMarkdown file
 6) Link to GitHub repo via space provided in Case Study 02 page in 2DS
