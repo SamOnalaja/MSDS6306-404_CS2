@@ -10,6 +10,7 @@ library(caret)
 library(MASS)
 library(lattice)
 library(ggplot2)
+library(dplyr)
 
 #Reads in the files
 df <- read.csv("csv/CaseStudy2-data.csv")
@@ -95,17 +96,37 @@ acc
 #---------------TODO: Choose the best prediction--------------
 #write.csv(cust.model, "Case2Predictions.csv")
 
-#Job Satisifcation by Role
-library(plyr)
-count.jr <- count(dfc,"JobRole")
-count.jr
-count.js <- count(dfc,"JobSatisfaction")
+#A function
+#Does the math in making the amount into a percentage
+#Also does the transformation to a table and back
+makereadyforplot <- function(df)
+{
+  df1 <- table(df)
+  df2 <- df1
+  for(i in c(1:length(df1[,1])))
+  {
+    for(j in c(1:4))
+    {
+      df2[i,j] <- round(100*df1[i,j]/(df1[i,1]+df1[i,2]+df1[i,3]+df1[i,4]),0)
+    }
+  }
+  
+  as.data.frame(df2)
+}
 
-dfc2 <- dfc[,c("JobRole","JobSatisfaction")] %>% group_by("JobROle")
+#-------------------EVERYTHING BELOW HERE IS FOR MAKING THE HISTOGRAMS--------------------
+#Gets only the rows we want
+#(make sure they are always in the same order)
+dfc1 <- dfc[,c("JobRole","JobSatisfaction")]
+dfc3 <- makereadyforplot(dfc1)
 
-ggplot(dfc2, aes(x=dfc2$JobRole, y=dfc2$JobSatisfaction)) + geom_bar(position = "dodge",stat="identity",colour = "blue", fill ="blue") + labs(x="Job Role", y="Job Satisfaction") +  ggtitle("Job Satisfaction by Role") + coord_flip()
-
-
+#Plot the grouped histograms
+ggplot(data = dfc3, aes(x = factor(JobRole), y=Freq, group=JobSatisfaction, fill = JobSatisfaction)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  xlab("Job Role") +
+  ylab("Percent") +
+  geom_text(size=4, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=0.9), vjust=-0.25) +
+  scale_fill_brewer(palette = "Set1")
 
 
 ```
