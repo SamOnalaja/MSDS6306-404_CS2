@@ -22,7 +22,7 @@ testset$Attrition <- relevel(testset$Attrition, ref = "No")
 #Creates the prediction and sets the values to Yes/No
 predictyn <- function(fit, test)
 {
-  p1 <- ifelse(predict(fit, test) > 0.5, "Yes", "No")
+  p1 <- ifelse(predict(fit, test, type="response") > 0.5, "Yes", "No")
   p1
 }
 
@@ -64,7 +64,7 @@ back.model <- stepAIC(full.model, direction = c("backward"), trace=FALSE)
 forw.model <- stepAIC(full.model, direction = c("forward"), trace=FALSE)
 
 #Custom
-cust.model <- glm(Attrition~Age + BusinessTravel + DailyRate + Department + DistanceFromHome + Education + EducationField + EmployeeCount + EnvironmentSatisfaction + Gender + HourlyRate + JobInvolvement + JobLevel + JobRole + JobSatisfaction + MaritalStatus + MonthlyIncome + MonthlyRate + NumCompaniesWorked + OverTime + PercentSalaryHike + PerformanceRating + RelationshipSatisfaction + StandardHours + StockOptionLevel + TotalWorkingYears + TrainingTimesLastYear + WorkLifeBalance + YearsAtCompany + YearsInCurrentRole + YearsSinceLastPromotion + YearsWithCurrManager, data = dfc.train, family="binomial")
+cust.model <- glm(Attrition~BusinessTravel + DistanceFromHome + EnvironmentSatisfaction + JobInvolvement + JobSatisfaction + MaritalStatus + NumCompaniesWorked + OverTime + TotalWorkingYears + WorkLifeBalance + YearsInCurrentRole + YearsSinceLastPromotion, data = dfc.train, family="binomial")
 
 #Tests the models
 #'WARNING: prediction from a rank-deficient fit may be misleading' suggest that we have too many explanatory variables
@@ -83,5 +83,9 @@ forw.mat <- confusionMatrix(table(dfc.test$Attrition, pred.forw))
 acc <- as.data.frame(cbind(cust.mat$overall[1]*100, step.mat$overall[1]*100, back.mat$overall[1]*100, forw.mat$overall[1]*100))
 names(acc) <- c("Custom", "Stepwise", "Backward", "Forward")
 acc
+
+#---------------TODO: Choose the best prediction--------------
+#write.csv(cust.model, "Case2Predictions.csv")
+
 
 ```
