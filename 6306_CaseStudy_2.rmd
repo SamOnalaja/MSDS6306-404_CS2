@@ -9,7 +9,7 @@ output: html_document
 library(caret)
 library(MASS)
 library(lattice)
-
+library(ggplot2)
 
 #Reads in the files
 df <- read.csv("csv/CaseStudy2-data.csv")
@@ -37,7 +37,7 @@ pairs(df[,c(3,31:37)])
 #Age + BusinessTravel + DailyRate + Department + DistanceFromHome + Education + EducationField + EmployeeCount + EnvironmentSatisfaction + Gender + HourlyRate + JobInvolvement + JobLevel + JobRole + JobSatisfaction + MaritalStatus + MonthlyIncome + MonthlyRate + NumCompaniesWorked + OverTime + PercentSalaryHike + PerformanceRating + RelationshipSatisfaction + StandardHours + StockOptionLevel + TotalWorkingYears + TrainingTimesLastYear + WorkLifeBalance + YearsAtCompany + YearsInCurrentRole + YearsSinceLastPromotion + YearsWithCurrManager
 
 #Not necessary in model:
-#ID, EmployeeNumber, Over18, Rand (what even is that?), StandardHours, EmployeeCount
+#ID, EmployeeNumber, Over18, Rand, StandardHours, EmployeeCount
 
 #dfc is the cleaned data (gets rid of factor with only 1 level)
 dfc <- df
@@ -63,8 +63,11 @@ back.model <- stepAIC(full.model, direction = c("backward"), trace=FALSE)
 #Forward
 forw.model <- stepAIC(full.model, direction = c("forward"), trace=FALSE)
 
-#Custom
-cust.model <- glm(Attrition~BusinessTravel + DistanceFromHome + EnvironmentSatisfaction + JobInvolvement + JobSatisfaction + MaritalStatus + NumCompaniesWorked + OverTime + TotalWorkingYears + WorkLifeBalance + YearsInCurrentRole + YearsSinceLastPromotion, data = dfc.train, family="binomial")
+#Custom Attrition w/Acc 87.52137
+#cust.model <- glm(Attrition~BusinessTravel + DistanceFromHome + EnvironmentSatisfaction + JobInvolvement + JobSatisfaction + MaritalStatus + NumCompaniesWorked + OverTime + TotalWorkingYears + WorkLifeBalance + YearsInCurrentRole + YearsSinceLastPromotion, data = dfc.train, family="binomial")
+
+#Custom Attrition w/Acc 88.55
+cust.model <- glm(Attrition~BusinessTravel + Department + DistanceFromHome + EnvironmentSatisfaction + JobInvolvement + JobRole + JobSatisfaction + MaritalStatus + NumCompaniesWorked + OverTime + RelationshipSatisfaction + YearsAtCompany + YearsSinceLastPromotion, data = dfc.train, family="binomial")
 
 #Tests the models
 #'WARNING: prediction from a rank-deficient fit may be misleading' suggest that we have too many explanatory variables
@@ -79,6 +82,11 @@ step.mat <- confusionMatrix(table(dfc.test$Attrition, pred.step))
 back.mat <- confusionMatrix(table(dfc.test$Attrition, pred.back))
 forw.mat <- confusionMatrix(table(dfc.test$Attrition, pred.forw))
 
+cust.mat
+step.mat
+back.mat
+forw.mat
+
 #Prints out just the accuracy % of the models
 acc <- as.data.frame(cbind(cust.mat$overall[1]*100, step.mat$overall[1]*100, back.mat$overall[1]*100, forw.mat$overall[1]*100))
 names(acc) <- c("Custom", "Stepwise", "Backward", "Forward")
@@ -86,6 +94,18 @@ acc
 
 #---------------TODO: Choose the best prediction--------------
 #write.csv(cust.model, "Case2Predictions.csv")
+
+#Job Satisifcation by Role
+library(plyr)
+count.jr <- count(dfc,"JobRole")
+count.jr
+count.js <- count(dfc,"JobSatisfaction")
+
+dfc2 <- dfc[,c("JobRole","JobSatisfaction")] %>% group_by("JobROle")
+
+ggplot(dfc2, aes(x=dfc2$JobRole, y=dfc2$JobSatisfaction)) + geom_bar(position = "dodge",stat="identity",colour = "blue", fill ="blue") + labs(x="Job Role", y="Job Satisfaction") +  ggtitle("Job Satisfaction by Role") + coord_flip()
+
+
 
 
 ```
