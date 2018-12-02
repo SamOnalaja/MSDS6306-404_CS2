@@ -16,7 +16,7 @@ library(dplyr)
 df <- read.csv("csv/CaseStudy2-data.csv")
 testset <- read.csv("csv/CaseStudy2Validation.csv")
 
-#Sets the reference level to No so that it is predicting Yes
+#Sets the reference level to 'No' so that it is predicting 'Yes'
 df$Attrition <- relevel(df$Attrition, ref = "No")
 testset$Attrition <- relevel(testset$Attrition, ref = "No")
 
@@ -27,20 +27,20 @@ predictyn <- function(fit, test)
   p1
 }
 
-#-------------Plotting everything... why?... why not-------------
+#-------------Plotting everything to see the correlation between pairs of variables within the data set-------------
 pairs(df[,c(3,2,4:8)])
 pairs(df[,c(3,9:16)])
 pairs(df[,c(3,17:23)])
 pairs(df[,c(3,24:30)])
 pairs(df[,c(3,31:37)])
 
-#--------------------All of the column names------------
+#--------------------All of the variable names------------
 #Age + BusinessTravel + DailyRate + Department + DistanceFromHome + Education + EducationField + EmployeeCount + EnvironmentSatisfaction + Gender + HourlyRate + JobInvolvement + JobLevel + JobRole + JobSatisfaction + MaritalStatus + MonthlyIncome + MonthlyRate + NumCompaniesWorked + OverTime + PercentSalaryHike + PerformanceRating + RelationshipSatisfaction + StandardHours + StockOptionLevel + TotalWorkingYears + TrainingTimesLastYear + WorkLifeBalance + YearsAtCompany + YearsInCurrentRole + YearsSinceLastPromotion + YearsWithCurrManager
 
-#Not necessary in model:
+#Determined the following variables to be unnecessary in the model:
 #ID, EmployeeNumber, Over18, Rand, StandardHours, EmployeeCount
 
-#dfc is the cleaned data (gets rid of factor with only 1 level)
+#dfc is the cleaned data (gets rid of variable with only 1 level)
 dfc <- df
 dfc$Over18 <- NULL
 
@@ -88,17 +88,15 @@ step.mat
 back.mat
 forw.mat
 
-#Prints out just the accuracy % of the models
+#Prints out just the overall accuracy % of the models
 acc <- as.data.frame(cbind(cust.mat$overall[1]*100, step.mat$overall[1]*100, back.mat$overall[1]*100, forw.mat$overall[1]*100))
 names(acc) <- c("Custom", "Stepwise", "Backward", "Forward")
 acc
 
 #---------------TODO: Choose the best prediction--------------
-#write.csv(cust.model, "Case2Predictions.csv")
+write.csv(pred.cust, "Case2Predictions.csv")
 
-#A function
-#Does the math in making the amount into a percentage
-#Also does the transformation to a table and back
+#Create function to calculate the amount into a percentage and process the transformation to a table and back
 makereadyforplot <- function(df)
 {
   df1 <- table(df)
@@ -115,18 +113,57 @@ makereadyforplot <- function(df)
 }
 
 #-------------------EVERYTHING BELOW HERE IS FOR MAKING THE HISTOGRAMS--------------------
-#Gets only the rows we want
-#(make sure they are always in the same order)
-dfc1 <- dfc[,c("JobRole","JobSatisfaction")]
-dfc3 <- makereadyforplot(dfc1)
+#Gets only the rows we want and make sure they are always in the same order
+dfc.js <- dfc[,c("JobRole","JobSatisfaction")]
+dfc2 <- makereadyforplot(dfc.js)
 
-#Plot the grouped histograms
-ggplot(data = dfc3, aes(x = factor(JobRole), y=Freq, group=JobSatisfaction, fill = JobSatisfaction)) +
+#Plot Job Satisifaction by Role
+ggplot(data = dfc2, aes(x = factor(JobRole), y=Freq, group=JobSatisfaction, fill = JobSatisfaction)) +
   geom_bar(stat = "identity", position = "dodge") +
   xlab("Job Role") +
   ylab("Percent") +
-  geom_text(size=4, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=0.9), vjust=-0.25) +
-  scale_fill_brewer(palette = "Set1")
+  geom_text(size=3, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
+  scale_fill_brewer(palette = "Set1") + 
+  ggtitle("Job Satisfaction by Role") +
+  theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
 
+#Plot Environment Satisfaction by Role
+dfc.es <- dfc[,c("JobRole","EnvironmentSatisfaction")]
+dfc3 <- makereadyforplot(dfc.es)
+
+ggplot(data = dfc3, aes(x = factor(JobRole), y=Freq, group=EnvironmentSatisfaction, fill = EnvironmentSatisfaction)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  xlab("Job Role") +
+  ylab("Percent") +
+  geom_text(size=3, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
+  scale_fill_brewer(palette = "Set2") + 
+  ggtitle("Environment Satisfaction by Role") +
+  theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
+
+#Plot Relationship Satisfaction by Role
+dfc.rs <- dfc[,c("JobRole","RelationshipSatisfaction")]
+dfc4 <- makereadyforplot(dfc.rs)
+
+ggplot(data = dfc4, aes(x = factor(JobRole), y=Freq, group=RelationshipSatisfaction, fill = RelationshipSatisfaction)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  xlab("Job Role") +
+  ylab("Percent") +
+  geom_text(size=3, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
+  scale_fill_brewer(palette = "Set3") + 
+  ggtitle("Relationship Satisfaction by Role") +
+  theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
+
+#Plot Work Life Balance by Role
+dfc.wlb <- dfc[,c("JobRole","WorkLifeBalance")]
+dfc5 <- makereadyforplot(dfc.wlb)
+
+ggplot(data = dfc5, aes(x = factor(JobRole), y=Freq, group=WorkLifeBalance, fill = WorkLifeBalance)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  xlab("Job Role") +
+  ylab("Percent") +
+  geom_text(size=3, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
+  scale_fill_brewer(palette = "Set1") + 
+  ggtitle("Work Life Balance by Role") +
+  theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
 
 ```
