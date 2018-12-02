@@ -1,4 +1,4 @@
-﻿# MSDS6306-404_CS2
+﻿DDS# MSDS6306-404_CS2
 Case Study 2 - DDS Analytics
 
 Objective: Predict employee turnover for talent management by conducting analysis of existing employee data

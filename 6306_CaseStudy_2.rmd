@@ -1,33 +1,33 @@
 ---
-title: "Case Study 2"
+title: "Talent Management"
 author: "Mai Loan Tran, Zackary Gill"
 date: "November 27, 2018"
 output: html_document
 ---
 
-```{r}
+##Executive Summary
+#### Talent management is an iterative process of developing and retaining employees. Our analysis yielded that there are thirteen (13) factors that contribute to turnover with an overall 88.6% accuracy. While there were positive relationships between the varying satisfaction metrics recently collected by job roles, the differences were not statistically significant.
+
+##Introduction
+#### DDSAnalytics is tasked with predicting employee turnover by conducting an analysis of employee data for the purpose of talent management. While seeking to determine factors that lead to attrition and identify job role specific trends, our deliverable is to build a model to predict attrition with at least 60% accuracy.
+
+```{r preparation}
 library(caret)
 library(MASS)
 library(lattice)
 library(ggplot2)
 library(dplyr)
+library(onewaytests)
+library(agricolae)
 
 #Reads in the files
 df <- read.csv("csv/CaseStudy2-data.csv")
 testset <- read.csv("csv/CaseStudy2Validation.csv")
-
-#Sets the reference level to 'No' so that it is predicting 'Yes'
-df$Attrition <- relevel(df$Attrition, ref = "No")
-testset$Attrition <- relevel(testset$Attrition, ref = "No")
-
-#Creates the prediction and sets the values to Yes/No
-predictyn <- function(fit, test)
-{
-  p1 <- ifelse(predict(fit, test, type="response") > 0.5, "Yes", "No")
-  p1
-}
-
-#-------------Plotting everything to see the correlation between pairs of variables within the data set-------------
+```
+##Analysis
+####We began our data analysis by plotting all the variables to identify the correlation and direction of the relationship between the pairs of variables. Then, we looked for the relationship between job role and the differing satisfaction metrics from the recent survey responses.
+```{r EDA}
+#-------------Scatterplot matrices of all variables to identify correlations between pairs of variables within the data set-------------
 pairs(df[,c(3,2,4:8)])
 pairs(df[,c(3,9:16)])
 pairs(df[,c(3,17:23)])
@@ -43,6 +43,142 @@ pairs(df[,c(3,31:37)])
 #dfc is the cleaned data (gets rid of variable with only 1 level)
 dfc <- df
 dfc$Over18 <- NULL
+
+#-------------------Analysis of Job Role Specific Trends--------------------
+#Create function to calculate the amount into a percentage and process the transformation to a table and back
+makereadyforplot <- function(df)
+{
+  df1 <- table(df)
+  df2 <- df1
+  for(i in c(1:length(df1[,1])))
+  {
+    for(j in c(1:4))
+    {
+      df2[i,j] <- round(100*df1[i,j]/(df1[i,1]+df1[i,2]+df1[i,3]+df1[i,4]),0)
+    }
+  }
+  
+  as.data.frame(df2)
+}
+```
+####While there was not a statistical significance in job satisfaction beteen the roles (p-value 0.9079), Research Scientists and Healthcare Representatives both have the highest equal mean in job satisfaction at 2.80 in Medium-High range. Human Resources have the lowest mean at 2.57.
+```{r job_satisfaction_by_role}
+#Gets only the rows we want and make sure they are always in the same order
+dfc.js <- dfc[,c("JobRole","JobSatisfaction")]
+dfc2 <- makereadyforplot(dfc.js)
+
+#Plot Job Satisifaction by Role
+ggplot(data = dfc2, aes(x = factor(JobRole), y=Freq, group=JobSatisfaction, fill = JobSatisfaction)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  xlab("Job Role") +
+  ylab("Percent") +
+  geom_text(size=3, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
+  scale_fill_brewer(palette = "Set1") + 
+  ggtitle("Job Satisfaction by Role") +
+  theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
+
+#Welch's
+output.js.welch = welch.test(JobSatisfaction~JobRole,data=dfc.js)
+
+#Fisher LSD 
+aov.js = aov(JobSatisfaction~JobRole,data=dfc.js)
+output.js = LSD.test(aov.js,"JobRole", p.adj="none")
+output.js
+
+#Fisher LSD with Bonferroni correction
+output.js.bon = LSD.test(aov.js,"JobRole", p.adj="bonferroni")
+output.js.bon
+
+#Scheffe's
+output.js.scheffe = scheffe.test(aov.js,"JobRole")
+output.js.scheffe
+
+#Tukey's
+output.js.HSD = HSD.test(aov.js,"JobRole")
+output.js.HSD
+```
+####The mean environment satisfaction for all job roles is 2.71 in Medium-High range whereas Manufacturing Directors have the highest mean environment satisfaction at 2.90 and Research Directors have the lowest mean environment satisfaction at 2.39. The difference is not statistically significant at p-value 0.2330.
+```{r environment_satisfaction_by_role}
+#Plot Environment Satisfaction by Role
+dfc.es <- dfc[,c("JobRole","EnvironmentSatisfaction")]
+dfc3 <- makereadyforplot(dfc.es)
+
+ggplot(data = dfc3, aes(x = factor(JobRole), y=Freq, group=EnvironmentSatisfaction, fill = EnvironmentSatisfaction)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  xlab("Job Role") +
+  ylab("Percent") +
+  geom_text(size=3, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
+  scale_fill_brewer(palette = "Set2") + 
+  ggtitle("Environment Satisfaction by Role") +
+  theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
+
+#Welch's
+output.es.welch = welch.test(EnvironmentSatisfaction~JobRole,data=dfc.es)
+
+#Fisher LSD with Bonferroni correction
+aov.es = aov(EnvironmentSatisfaction~JobRole,data=dfc.es)
+output.es.bon = LSD.test(aov.es,"JobRole", p.adj="bonferroni")
+output.es.bon
+```
+####The mean relationship satisfaction for all job roles ranged from 2.50 to 2.77, albeit at a p-value 0.9362, the difference is not statistically significant between the roles. Managers have the highest mean relationship satisfaction whereas Sales Representatives have the lowest mean.
+```{r relationship_satisfaction_by_role}
+#Plot Relationship Satisfaction by Role
+dfc.rs <- dfc[,c("JobRole","RelationshipSatisfaction")]
+dfc4 <- makereadyforplot(dfc.rs)
+
+ggplot(data = dfc4, aes(x = factor(JobRole), y=Freq, group=RelationshipSatisfaction, fill = RelationshipSatisfaction)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  xlab("Job Role") +
+  ylab("Percent") +
+  geom_text(size=3, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
+  scale_fill_brewer(palette = "Set3") + 
+  ggtitle("Relationship Satisfaction by Role") +
+  theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
+
+#Welch's
+output.rs.welch = welch.test(RelationshipSatisfaction~JobRole,data=dfc.rs)
+
+#Fisher LSD with Bonferroni correction
+aov.rs = aov(RelationshipSatisfaction~JobRole,data=dfc.rs)
+output.rs.bon = LSD.test(aov.rs,"JobRole", p.adj="bonferroni")
+output.rs.bon
+```
+####55% or more of the survey responses within each job role suggest a better work life balance. Human Resources personnel have the highest mean at 3.0 compared to Research Scientists with the lowest mean work life balance at 2.67.
+```{r worklifebalance_satisfaction_by_role}
+#Plot Work Life Balance by Role
+dfc.wlb <- dfc[,c("JobRole","WorkLifeBalance")]
+dfc5 <- makereadyforplot(dfc.wlb)
+
+ggplot(data = dfc5, aes(x = factor(JobRole), y=Freq, group=WorkLifeBalance, fill = WorkLifeBalance)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  xlab("Job Role") +
+  ylab("Percent") +
+  geom_text(size=3, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
+  scale_fill_brewer(palette = "Set1") + 
+  ggtitle("Work Life Balance by Role") +
+  theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
+
+#Welch's
+output.wlb.welch = welch.test(WorkLifeBalance~JobRole,data=dfc.wlb)
+
+#Fisher LSD with Bonferroni correction
+aov.wlb = aov(WorkLifeBalance~JobRole,data=dfc.wlb)
+output.wlb.bon = LSD.test(aov.wlb,"JobRole", p.adj="bonferroni")
+output.wlb.bon
+```
+##Prediction
+####With an 88.6% overall accuracy, our custom model identified that business travel, department, commute distance, job involvement, job role, marital status, number of companies worked, overtime, years at your company, years since last promotion, job satisfaction, relationship satisfaction, and environment satisfaction are factors that contribute to turnover. Managing these factors in developing and retaining employees could reduce and prevent attrition.
+```{r predict}
+#Sets the reference level to 'No' so that it is predicting 'Yes'
+df$Attrition <- relevel(df$Attrition, ref = "No")
+testset$Attrition <- relevel(testset$Attrition, ref = "No")
+
+#Creates the prediction and sets the values to Yes/No
+predictyn <- function(fit, test)
+{
+  p1 <- ifelse(predict(fit, test, type="response") > 0.5, "Yes", "No")
+  p1
+}
 
 #-------------Cross Validation------------------
 set.seed(1)
@@ -93,77 +229,6 @@ acc <- as.data.frame(cbind(cust.mat$overall[1]*100, step.mat$overall[1]*100, bac
 names(acc) <- c("Custom", "Stepwise", "Backward", "Forward")
 acc
 
-#---------------TODO: Choose the best prediction--------------
+#---------------Choose the best prediction--------------
 write.csv(pred.cust, "Case2Predictions.csv")
-
-#Create function to calculate the amount into a percentage and process the transformation to a table and back
-makereadyforplot <- function(df)
-{
-  df1 <- table(df)
-  df2 <- df1
-  for(i in c(1:length(df1[,1])))
-  {
-    for(j in c(1:4))
-    {
-      df2[i,j] <- round(100*df1[i,j]/(df1[i,1]+df1[i,2]+df1[i,3]+df1[i,4]),0)
-    }
-  }
-  
-  as.data.frame(df2)
-}
-
-#-------------------EVERYTHING BELOW HERE IS FOR MAKING THE HISTOGRAMS--------------------
-#Gets only the rows we want and make sure they are always in the same order
-dfc.js <- dfc[,c("JobRole","JobSatisfaction")]
-dfc2 <- makereadyforplot(dfc.js)
-
-#Plot Job Satisifaction by Role
-ggplot(data = dfc2, aes(x = factor(JobRole), y=Freq, group=JobSatisfaction, fill = JobSatisfaction)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  xlab("Job Role") +
-  ylab("Percent") +
-  geom_text(size=3, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
-  scale_fill_brewer(palette = "Set1") + 
-  ggtitle("Job Satisfaction by Role") +
-  theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
-
-#Plot Environment Satisfaction by Role
-dfc.es <- dfc[,c("JobRole","EnvironmentSatisfaction")]
-dfc3 <- makereadyforplot(dfc.es)
-
-ggplot(data = dfc3, aes(x = factor(JobRole), y=Freq, group=EnvironmentSatisfaction, fill = EnvironmentSatisfaction)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  xlab("Job Role") +
-  ylab("Percent") +
-  geom_text(size=3, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
-  scale_fill_brewer(palette = "Set2") + 
-  ggtitle("Environment Satisfaction by Role") +
-  theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
-
-#Plot Relationship Satisfaction by Role
-dfc.rs <- dfc[,c("JobRole","RelationshipSatisfaction")]
-dfc4 <- makereadyforplot(dfc.rs)
-
-ggplot(data = dfc4, aes(x = factor(JobRole), y=Freq, group=RelationshipSatisfaction, fill = RelationshipSatisfaction)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  xlab("Job Role") +
-  ylab("Percent") +
-  geom_text(size=3, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
-  scale_fill_brewer(palette = "Set3") + 
-  ggtitle("Relationship Satisfaction by Role") +
-  theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
-
-#Plot Work Life Balance by Role
-dfc.wlb <- dfc[,c("JobRole","WorkLifeBalance")]
-dfc5 <- makereadyforplot(dfc.wlb)
-
-ggplot(data = dfc5, aes(x = factor(JobRole), y=Freq, group=WorkLifeBalance, fill = WorkLifeBalance)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  xlab("Job Role") +
-  ylab("Percent") +
-  geom_text(size=3, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
-  scale_fill_brewer(palette = "Set1") + 
-  ggtitle("Work Life Balance by Role") +
-  theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
-
 ```
