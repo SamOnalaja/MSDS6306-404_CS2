@@ -77,25 +77,13 @@ ggplot(data = dfc2, aes(x = factor(JobRole), y=Freq, group=JobSatisfaction, fill
   ggtitle("Job Satisfaction by Role") +
   theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
 
-#Welch's
+#Welch's ANOVA for Job Satisfaction
 output.js.welch = welch.test(JobSatisfaction~JobRole,data=dfc.js)
 
-#Fisher LSD 
-aov.js = aov(JobSatisfaction~JobRole,data=dfc.js)
-output.js = LSD.test(aov.js,"JobRole", p.adj="none")
-output.js
-
-#Fisher LSD with Bonferroni correction
+#Fisher LSD with Bonferroni correction 
 output.js.bon = LSD.test(aov.js,"JobRole", p.adj="bonferroni")
 output.js.bon
 
-#Scheffe's
-output.js.scheffe = scheffe.test(aov.js,"JobRole")
-output.js.scheffe
-
-#Tukey's
-output.js.HSD = HSD.test(aov.js,"JobRole")
-output.js.HSD
 ```
 ####The mean environment satisfaction for all job roles is 2.71 in Medium-High range whereas Manufacturing Directors have the highest mean environment satisfaction at 2.90 and Research Directors have the lowest mean environment satisfaction at 2.39. The difference is not statistically significant at p-value 0.2330.
 ```{r environment_satisfaction_by_role}
@@ -112,7 +100,7 @@ ggplot(data = dfc3, aes(x = factor(JobRole), y=Freq, group=EnvironmentSatisfacti
   ggtitle("Environment Satisfaction by Role") +
   theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
 
-#Welch's
+#Welch's ANOVA for Environment Satisfaction
 output.es.welch = welch.test(EnvironmentSatisfaction~JobRole,data=dfc.es)
 
 #Fisher LSD with Bonferroni correction
@@ -135,7 +123,7 @@ ggplot(data = dfc4, aes(x = factor(JobRole), y=Freq, group=RelationshipSatisfact
   ggtitle("Relationship Satisfaction by Role") +
   theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
 
-#Welch's
+#Welch's ANOVA for Relationship Satisfaction
 output.rs.welch = welch.test(RelationshipSatisfaction~JobRole,data=dfc.rs)
 
 #Fisher LSD with Bonferroni correction
@@ -158,7 +146,7 @@ ggplot(data = dfc5, aes(x = factor(JobRole), y=Freq, group=WorkLifeBalance, fill
   ggtitle("Work Life Balance by Role") +
   theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
 
-#Welch's
+#Welch's ANOVA for Work Life Balance Satisfaction
 output.wlb.welch = welch.test(WorkLifeBalance~JobRole,data=dfc.wlb)
 
 #Fisher LSD with Bonferroni correction
