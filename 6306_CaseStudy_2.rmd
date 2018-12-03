@@ -72,7 +72,7 @@ ggplot(data = dfc2, aes(x = factor(JobRole), y=Freq, group=JobSatisfaction, fill
   geom_bar(stat = "identity", position = "dodge") +
   xlab("Job Role") +
   ylab("Percent") +
-  geom_text(size=3, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
+  geom_text(size=2.5, vjust=-0.1, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=0.95)) +
   scale_fill_brewer(palette = "Set1") + 
   ggtitle("Job Satisfaction by Role") +
   theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
@@ -81,6 +81,7 @@ ggplot(data = dfc2, aes(x = factor(JobRole), y=Freq, group=JobSatisfaction, fill
 output.js.welch = welch.test(JobSatisfaction~JobRole,data=dfc.js)
 
 #Fisher LSD with Bonferroni correction 
+aov.js = aov(JobSatisfaction~JobRole,data=dfc.js)
 output.js.bon = LSD.test(aov.js,"JobRole", p.adj="bonferroni")
 output.js.bon
 
@@ -95,7 +96,7 @@ ggplot(data = dfc3, aes(x = factor(JobRole), y=Freq, group=EnvironmentSatisfacti
   geom_bar(stat = "identity", position = "dodge") +
   xlab("Job Role") +
   ylab("Percent") +
-  geom_text(size=3, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
+  geom_text(size=2.5, vjust=-0.1, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
   scale_fill_brewer(palette = "Set2") + 
   ggtitle("Environment Satisfaction by Role") +
   theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
@@ -118,7 +119,7 @@ ggplot(data = dfc4, aes(x = factor(JobRole), y=Freq, group=RelationshipSatisfact
   geom_bar(stat = "identity", position = "dodge") +
   xlab("Job Role") +
   ylab("Percent") +
-  geom_text(size=3, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
+  geom_text(size=2.5, vjust=-0.1, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
   scale_fill_brewer(palette = "Set3") + 
   ggtitle("Relationship Satisfaction by Role") +
   theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
@@ -141,7 +142,7 @@ ggplot(data = dfc5, aes(x = factor(JobRole), y=Freq, group=WorkLifeBalance, fill
   geom_bar(stat = "identity", position = "dodge") +
   xlab("Job Role") +
   ylab("Percent") +
-  geom_text(size=3, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
+  geom_text(size=2.5, vjust=-0.1, aes(label= paste(Freq,"%",sep="")), position=position_dodge(width=.95)) +
   scale_fill_brewer(palette = "Set1") + 
   ggtitle("Work Life Balance by Role") +
   theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
@@ -218,5 +219,5 @@ names(acc) <- c("Custom", "Stepwise", "Backward", "Forward")
 acc
 
 #---------------Choose the best prediction--------------
-write.csv(pred.cust, "Case2Predictions.csv")
+write.csv(pred.cust, "csv/Case2Predictions.csv")
 ```
