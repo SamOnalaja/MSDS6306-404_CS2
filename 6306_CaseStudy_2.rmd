@@ -155,7 +155,7 @@ aov.wlb = aov(WorkLifeBalance~JobRole,data=dfTrain.wlb)
 output.wlb.bon = LSD.test(aov.wlb,"JobRole", p.adj="bonferroni")
 output.wlb.bon$groups
 ```
-##Prediction
+##Prediction Conclusion
 ####With an 87.3% overall accuracy, our custom regression model identified that business travel, commute distance, job involvement, job role, marital status, number of companies worked, overtime, years at your company, years since last promotion, job satisfaction, relationship satisfaction, and environment satisfaction are factors that contribute to turnover. Managing these factors in developing and retaining employees could reduce and prevent attrition.
 ```{r predict, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Sets the reference level to 'No' so that it is predicting 'Yes'
@@ -237,5 +237,6 @@ model.info
 dfPreds <- pred.cust
 
 #---------------Choose the best prediction--------------
-write.csv(dfPreds, "Case2Predictions.csv")
+write.csv(dfPreds, "Case2PredictionsGillTran.csv")
 ```
+
