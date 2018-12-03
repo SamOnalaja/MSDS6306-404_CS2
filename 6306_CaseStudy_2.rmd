@@ -1,17 +1,17 @@
 ---
 title: "Talent Management"
 author: "Mai Loan Tran, Zackary Gill"
-date: "November 27, 2018"
+date: "December 3, 2018"
 output: html_document
 ---
 
 ##Executive Summary
-#### Talent management is an iterative process of developing and retaining employees. Our analysis yielded that there are thirteen (13) factors that contribute to turnover with an overall 88.6% accuracy. While there were positive relationships between the varying satisfaction metrics recently collected by job roles, the differences were not statistically significant.
+#### Talent management is an iterative process of developing and retaining employees. Our analysis yielded that there are eleven (11) factors that contribute to turnover with an overall 87.3% accuracy. While there were positive relationships between the varying satisfaction metrics recently collected by job roles, the differences were not statistically significant.
 
 ##Introduction
 #### DDSAnalytics is tasked with predicting employee turnover by conducting an analysis of employee data for the purpose of talent management. While seeking to determine factors that lead to attrition and identify job role specific trends, our deliverable is to build a model to predict attrition with at least 60% accuracy.
 
-```{r preparation}
+```{r preparation, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 library(caret)
 library(MASS)
 library(lattice)
@@ -21,28 +21,26 @@ library(onewaytests)
 library(agricolae)
 
 #Reads in the files
-df <- read.csv("csv/CaseStudy2-data.csv")
-testset <- read.csv("csv/CaseStudy2Validation.csv")
+dfTrain <- read.csv("csv/CaseStudy2-data.csv")
+dfVal <- read.csv("csv/CaseStudy2Validation.csv")
 ```
 ##Analysis
-####We began our data analysis by plotting all the variables to identify the correlation and direction of the relationship between the pairs of variables. Then, we looked for the relationship between job role and the differing satisfaction metrics from the recent survey responses.
-```{r EDA}
+####We began our data analysis by plotting all the variables to identify the correlation and direction of the relationship between the pairs of variables. This was done in order to visually see if any one factor heavily contributed to Attrition. Below is a sample of the plotting done between Attrition and the other variables.
+```{r EDA, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #-------------Scatterplot matrices of all variables to identify correlations between pairs of variables within the data set-------------
-pairs(df[,c(3,2,4:8)])
-pairs(df[,c(3,9:16)])
-pairs(df[,c(3,17:23)])
-pairs(df[,c(3,24:30)])
-pairs(df[,c(3,31:37)])
+pairs(dfTrain[,c(3,2,4:8)])
+#pairs(dfTrain[,c(3,9:16)])
+#pairs(dfTrain[,c(3,17:23)])
+#pairs(dfTrain[,c(3,24:30)])
+#pairs(dfTrain[,c(3,31:37)])
 
-#--------------------All of the variable names------------
-#Age + BusinessTravel + DailyRate + Department + DistanceFromHome + Education + EducationField + EmployeeCount + EnvironmentSatisfaction + Gender + HourlyRate + JobInvolvement + JobLevel + JobRole + JobSatisfaction + MaritalStatus + MonthlyIncome + MonthlyRate + NumCompaniesWorked + OverTime + PercentSalaryHike + PerformanceRating + RelationshipSatisfaction + StandardHours + StockOptionLevel + TotalWorkingYears + TrainingTimesLastYear + WorkLifeBalance + YearsAtCompany + YearsInCurrentRole + YearsSinceLastPromotion + YearsWithCurrManager
+#Back up the Over18 column for the future
+Over18.test <- dfTrain$Over18
+Over18.val <- dfVal$Over18
 
-#Determined the following variables to be unnecessary in the model:
-#ID, EmployeeNumber, Over18, Rand, StandardHours, EmployeeCount
-
-#dfc is the cleaned data (gets rid of variable with only 1 level)
-dfc <- df
-dfc$Over18 <- NULL
+#Gets rid of variable with only 1 level
+dfTrain$Over18 <- NULL
+dfVal$Over18 <- NULL
 
 #-------------------Analysis of Job Role Specific Trends--------------------
 #Create function to calculate the amount into a percentage and process the transformation to a table and back
@@ -61,14 +59,16 @@ makereadyforplot <- function(df)
   as.data.frame(df2)
 }
 ```
-####While there was not a statistical significance in job satisfaction beteen the roles (p-value 0.9079), Research Scientists and Healthcare Representatives both have the highest equal mean in job satisfaction at 2.80 in Medium-High range. Human Resources have the lowest mean at 2.57.
-```{r job_satisfaction_by_role}
+
+#### Next we looked for the relationship between job role and the differing satisfaction metrics from the recent survey responses. For each of these we used Welch's ANOVA and Fisher's LSD (with Bonferroni correction).
+#### While there was not a statistical significance in job satisfaction beteen the roles (p-value 0.9079), Research Scientists and Healthcare Representatives both have the highest equal mean in job satisfaction at 2.80 in Medium-High range. Human Resources have the lowest mean at 2.57.
+```{r job_satisfaction_by_role, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Gets only the rows we want and make sure they are always in the same order
-dfc.js <- dfc[,c("JobRole","JobSatisfaction")]
-dfc2 <- makereadyforplot(dfc.js)
+dfTrain.js <- dfTrain[,c("JobRole","JobSatisfaction")]
+dfTrain2 <- makereadyforplot(dfTrain.js)
 
 #Plot Job Satisifaction by Role
-ggplot(data = dfc2, aes(x = factor(JobRole), y=Freq, group=JobSatisfaction, fill = JobSatisfaction)) +
+ggplot(data = dfTrain2, aes(x = factor(JobRole), y=Freq, group=JobSatisfaction, fill = JobSatisfaction)) +
   geom_bar(stat = "identity", position = "dodge") +
   xlab("Job Role") +
   ylab("Percent") +
@@ -78,21 +78,21 @@ ggplot(data = dfc2, aes(x = factor(JobRole), y=Freq, group=JobSatisfaction, fill
   theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
 
 #Welch's ANOVA for Job Satisfaction
-output.js.welch = welch.test(JobSatisfaction~JobRole,data=dfc.js)
+output.js.welch = welch.test(JobSatisfaction~JobRole,data=dfTrain.js)
 
 #Fisher LSD with Bonferroni correction 
-aov.js = aov(JobSatisfaction~JobRole,data=dfc.js)
+aov.js = aov(JobSatisfaction~JobRole,data=dfTrain.js)
 output.js.bon = LSD.test(aov.js,"JobRole", p.adj="bonferroni")
-output.js.bon
+output.js.bon$groups
 
 ```
 ####The mean environment satisfaction for all job roles is 2.71 in Medium-High range whereas Manufacturing Directors have the highest mean environment satisfaction at 2.90 and Research Directors have the lowest mean environment satisfaction at 2.39. The difference is not statistically significant at p-value 0.2330.
-```{r environment_satisfaction_by_role}
+```{r environment_satisfaction_by_role, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Plot Environment Satisfaction by Role
-dfc.es <- dfc[,c("JobRole","EnvironmentSatisfaction")]
-dfc3 <- makereadyforplot(dfc.es)
+dfTrain.es <- dfTrain[,c("JobRole","EnvironmentSatisfaction")]
+dfTrain3 <- makereadyforplot(dfTrain.es)
 
-ggplot(data = dfc3, aes(x = factor(JobRole), y=Freq, group=EnvironmentSatisfaction, fill = EnvironmentSatisfaction)) +
+ggplot(data = dfTrain3, aes(x = factor(JobRole), y=Freq, group=EnvironmentSatisfaction, fill = EnvironmentSatisfaction)) +
   geom_bar(stat = "identity", position = "dodge") +
   xlab("Job Role") +
   ylab("Percent") +
@@ -102,20 +102,20 @@ ggplot(data = dfc3, aes(x = factor(JobRole), y=Freq, group=EnvironmentSatisfacti
   theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
 
 #Welch's ANOVA for Environment Satisfaction
-output.es.welch = welch.test(EnvironmentSatisfaction~JobRole,data=dfc.es)
+output.es.welch = welch.test(EnvironmentSatisfaction~JobRole,data=dfTrain.es)
 
 #Fisher LSD with Bonferroni correction
-aov.es = aov(EnvironmentSatisfaction~JobRole,data=dfc.es)
+aov.es = aov(EnvironmentSatisfaction~JobRole,data=dfTrain.es)
 output.es.bon = LSD.test(aov.es,"JobRole", p.adj="bonferroni")
-output.es.bon
+output.es.bon$groups
 ```
 ####The mean relationship satisfaction for all job roles ranged from 2.50 to 2.77, albeit at a p-value 0.9362, the difference is not statistically significant between the roles. Managers have the highest mean relationship satisfaction whereas Sales Representatives have the lowest mean.
-```{r relationship_satisfaction_by_role}
+```{r relationship_satisfaction_by_role, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Plot Relationship Satisfaction by Role
-dfc.rs <- dfc[,c("JobRole","RelationshipSatisfaction")]
-dfc4 <- makereadyforplot(dfc.rs)
+dfTrain.rs <- dfTrain[,c("JobRole","RelationshipSatisfaction")]
+dfTrain4 <- makereadyforplot(dfTrain.rs)
 
-ggplot(data = dfc4, aes(x = factor(JobRole), y=Freq, group=RelationshipSatisfaction, fill = RelationshipSatisfaction)) +
+ggplot(data = dfTrain4, aes(x = factor(JobRole), y=Freq, group=RelationshipSatisfaction, fill = RelationshipSatisfaction)) +
   geom_bar(stat = "identity", position = "dodge") +
   xlab("Job Role") +
   ylab("Percent") +
@@ -125,20 +125,20 @@ ggplot(data = dfc4, aes(x = factor(JobRole), y=Freq, group=RelationshipSatisfact
   theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
 
 #Welch's ANOVA for Relationship Satisfaction
-output.rs.welch = welch.test(RelationshipSatisfaction~JobRole,data=dfc.rs)
+output.rs.welch = welch.test(RelationshipSatisfaction~JobRole,data=dfTrain.rs)
 
 #Fisher LSD with Bonferroni correction
-aov.rs = aov(RelationshipSatisfaction~JobRole,data=dfc.rs)
+aov.rs = aov(RelationshipSatisfaction~JobRole,data=dfTrain.rs)
 output.rs.bon = LSD.test(aov.rs,"JobRole", p.adj="bonferroni")
-output.rs.bon
+output.rs.bon$groups
 ```
 ####55% or more of the survey responses within each job role suggest a better work life balance. Human Resources personnel have the highest mean at 3.0 compared to Research Scientists with the lowest mean work life balance at 2.67.
-```{r worklifebalance_satisfaction_by_role}
+```{r worklifebalance_satisfaction_by_role, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Plot Work Life Balance by Role
-dfc.wlb <- dfc[,c("JobRole","WorkLifeBalance")]
-dfc5 <- makereadyforplot(dfc.wlb)
+dfTrain.wlb <- dfTrain[,c("JobRole","WorkLifeBalance")]
+dfTrain5 <- makereadyforplot(dfTrain.wlb)
 
-ggplot(data = dfc5, aes(x = factor(JobRole), y=Freq, group=WorkLifeBalance, fill = WorkLifeBalance)) +
+ggplot(data = dfTrain5, aes(x = factor(JobRole), y=Freq, group=WorkLifeBalance, fill = WorkLifeBalance)) +
   geom_bar(stat = "identity", position = "dodge") +
   xlab("Job Role") +
   ylab("Percent") +
@@ -148,19 +148,19 @@ ggplot(data = dfc5, aes(x = factor(JobRole), y=Freq, group=WorkLifeBalance, fill
   theme(legend.position="top",plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))
 
 #Welch's ANOVA for Work Life Balance Satisfaction
-output.wlb.welch = welch.test(WorkLifeBalance~JobRole,data=dfc.wlb)
+output.wlb.welch = welch.test(WorkLifeBalance~JobRole,data=dfTrain.wlb)
 
 #Fisher LSD with Bonferroni correction
-aov.wlb = aov(WorkLifeBalance~JobRole,data=dfc.wlb)
+aov.wlb = aov(WorkLifeBalance~JobRole,data=dfTrain.wlb)
 output.wlb.bon = LSD.test(aov.wlb,"JobRole", p.adj="bonferroni")
-output.wlb.bon
+output.wlb.bon$groups
 ```
 ##Prediction
-####With an 88.6% overall accuracy, our custom model identified that business travel, department, commute distance, job involvement, job role, marital status, number of companies worked, overtime, years at your company, years since last promotion, job satisfaction, relationship satisfaction, and environment satisfaction are factors that contribute to turnover. Managing these factors in developing and retaining employees could reduce and prevent attrition.
-```{r predict}
+####With an 87.3% overall accuracy, our custom regression model identified that business travel, commute distance, job involvement, job role, marital status, number of companies worked, overtime, years at your company, years since last promotion, job satisfaction, relationship satisfaction, and environment satisfaction are factors that contribute to turnover. Managing these factors in developing and retaining employees could reduce and prevent attrition.
+```{r predict, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Sets the reference level to 'No' so that it is predicting 'Yes'
-df$Attrition <- relevel(df$Attrition, ref = "No")
-testset$Attrition <- relevel(testset$Attrition, ref = "No")
+dfTrain$Attrition <- relevel(dfTrain$Attrition, ref = "No")
+dfVal$Attrition <- relevel(dfVal$Attrition, ref = "No")
 
 #Creates the prediction and sets the values to Yes/No
 predictyn <- function(fit, test)
@@ -171,14 +171,24 @@ predictyn <- function(fit, test)
 
 #-------------Cross Validation------------------
 set.seed(1)
-train_perc <- 0.5
-samplesize <- length(dfc$Attrition)
-train_indices = sample(seq(1, samplesize,length = samplesize), train_perc*samplesize)
-dfc.train <- dfc[train_indices,]
-dfc.test <- dfc[-train_indices,]
+#train_perc <- 0.5
+#samplesize <- length(dfTrain$Attrition)
+#train_indices = sample(seq(1, samplesize,length = samplesize), train_perc*samplesize)
+#dfTrain.train <- dfTrain[train_indices,]
+#dfTrain.test <- dfTrain[-train_indices,]
+
+#--------------------All of the variable names------------
+#Age + BusinessTravel + DailyRate + Department + DistanceFromHome + Education + EducationField + EmployeeCount + EnvironmentSatisfaction + Gender + HourlyRate + JobInvolvement + JobLevel + JobRole + JobSatisfaction + MaritalStatus + MonthlyIncome + MonthlyRate + NumCompaniesWorked + OverTime + PercentSalaryHike + PerformanceRating + RelationshipSatisfaction + StandardHours + StockOptionLevel + TotalWorkingYears + TrainingTimesLastYear + WorkLifeBalance + YearsAtCompany + YearsInCurrentRole + YearsSinceLastPromotion + YearsWithCurrManager
+
+#Determined the following variables to be unnecessary in the model:
+#ID, EmployeeNumber, Over18, Rand, StandardHours, EmployeeCount
+
+#Aparently we are no longer splitting up the data forcross validation
+dfTrain.train <- dfTrain
+dfTrain.test <- dfVal
 
 #Automatically selecting explanatory variables
-full.model <- glm(Attrition~., data = dfc.train, family="binomial")
+full.model <- glm(Attrition~., data = dfTrain.train, family="binomial")
 
 #Stepwise
 step.model <- stepAIC(full.model, direction = c("both"), trace=FALSE)
@@ -189,35 +199,43 @@ back.model <- stepAIC(full.model, direction = c("backward"), trace=FALSE)
 #Forward
 forw.model <- stepAIC(full.model, direction = c("forward"), trace=FALSE)
 
-#Custom Attrition w/Acc 87.52137
-#cust.model <- glm(Attrition~BusinessTravel + DistanceFromHome + EnvironmentSatisfaction + JobInvolvement + JobSatisfaction + MaritalStatus + NumCompaniesWorked + OverTime + TotalWorkingYears + WorkLifeBalance + YearsInCurrentRole + YearsSinceLastPromotion, data = dfc.train, family="binomial")
+#Custom Attrition w/Acc 86
+#cust.model <- glm(Attrition~BusinessTravel + DistanceFromHome + EnvironmentSatisfaction + JobInvolvement + JobSatisfaction + MaritalStatus + NumCompaniesWorked + OverTime + TotalWorkingYears + WorkLifeBalance + YearsInCurrentRole + YearsSinceLastPromotion, data = dfTrain.train, family="binomial")
 
-#Custom Attrition w/Acc 88.55
-cust.model <- glm(Attrition~BusinessTravel + Department + DistanceFromHome + EnvironmentSatisfaction + JobInvolvement + JobRole + JobSatisfaction + MaritalStatus + NumCompaniesWorked + OverTime + RelationshipSatisfaction + YearsAtCompany + YearsSinceLastPromotion, data = dfc.train, family="binomial")
+#Custom Attrition w/Acc 87.3%
+cust.model <- glm(Attrition~BusinessTravel + DistanceFromHome + EnvironmentSatisfaction + JobInvolvement + JobRole + JobSatisfaction + MaritalStatus + NumCompaniesWorked + OverTime + RelationshipSatisfaction + YearsAtCompany, data = dfTrain.train, family="binomial")
 
 #Tests the models
 #'WARNING: prediction from a rank-deficient fit may be misleading' suggest that we have too many explanatory variables
-pred.cust <- as.vector(predictyn(cust.model, dfc.test))
-pred.step <- as.vector(predictyn(step.model, dfc.test))
-pred.back <- as.vector(predictyn(back.model, dfc.test))
-pred.forw <- as.vector(predictyn(forw.model, dfc.test))
+pred.cust <- as.vector(predictyn(cust.model, dfTrain.test))
+pred.step <- as.vector(predictyn(step.model, dfTrain.test))
+pred.back <- as.vector(predictyn(back.model, dfTrain.test))
+pred.forw <- as.vector(predictyn(forw.model, dfTrain.test))
 
 #Creates the confusion matrix with all those stats
-cust.mat <- confusionMatrix(table(dfc.test$Attrition, pred.cust))
-step.mat <- confusionMatrix(table(dfc.test$Attrition, pred.step))
-back.mat <- confusionMatrix(table(dfc.test$Attrition, pred.back))
-forw.mat <- confusionMatrix(table(dfc.test$Attrition, pred.forw))
+cust.mat <- confusionMatrix(table(dfTrain.test$Attrition, pred.cust))
+step.mat <- confusionMatrix(table(dfTrain.test$Attrition, pred.step))
+back.mat <- confusionMatrix(table(dfTrain.test$Attrition, pred.back))
+forw.mat <- confusionMatrix(table(dfTrain.test$Attrition, pred.forw))
 
-cust.mat
-step.mat
-back.mat
-forw.mat
+#cust.mat
+#step.mat
+#back.mat
+#forw.mat
 
 #Prints out just the overall accuracy % of the models
 acc <- as.data.frame(cbind(cust.mat$overall[1]*100, step.mat$overall[1]*100, back.mat$overall[1]*100, forw.mat$overall[1]*100))
 names(acc) <- c("Custom", "Stepwise", "Backward", "Forward")
-acc
+numvar <- as.data.frame(cbind( (length(names(cust.model$model))-1), (length(names(step.model$model))-1), (length(names(back.model$model))-1), (length(names(forw.model$model))-1)))
+names(numvar) <- c("Custom", "Stepwise", "Backward", "Forward")
+model.info <- rbind(acc, numvar)
+rownames(model.info) <- c("Accuracy", "Num Terms")
+model.info
+#cust.mat$table
+
+#The custom model
+dfPreds <- pred.cust
 
 #---------------Choose the best prediction--------------
-write.csv(pred.cust, "csv/Case2Predictions.csv")
+write.csv(dfPreds, "Case2Predictions.csv")
 ```
