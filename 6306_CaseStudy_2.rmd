@@ -233,10 +233,11 @@ rownames(model.info) <- c("Accuracy", "Num Terms")
 model.info
 #cust.mat$table
 
-#The custom model
-dfPreds <- pred.cust
+#---------------Choose the best prediction and write to file--------------
+#The custom model predictions for the file
+dfPreds <- as.data.frame( cbind( dfVal$ID, pred.cust ) )
+names(dfPreds) <- c("ID", "Attrition")
 
-#---------------Choose the best prediction--------------
-write.csv(dfPreds, "Case2PredictionsGillTran.csv")
+write.csv(dfPreds, "Case2PredictionsGillTran.csv", row.names = FALSE)
 ```
 
