@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ##Executive Summary
-#### Talent management is an iterative process of developing and retaining employees. Our analysis yielded that there are eleven (11) factors that contribute to turnover with an overall 87.3% accuracy. While there were positive relationships between the varying satisfaction metrics recently collected by job roles, the differences were not statistically significant.
+#### Talent management is an iterative process of developing and retaining employees. Our analysis yielded that there are ten (10) factors that contribute to turnover with an overall 87.3% accuracy. While there were positive relationships between the varying satisfaction metrics recently collected by job roles, the differences were not statistically significant.
 
 ##Introduction
 #### DDSAnalytics is tasked with predicting employee turnover by conducting an analysis of employee data for the purpose of talent management. While seeking to determine factors that lead to attrition and identify job role specific trends, our deliverable is to build a model to predict attrition with at least 60% accuracy.
@@ -24,7 +24,6 @@ library(agricolae)
 dfTrain <- read.csv("csv/CaseStudy2-data.csv")
 dfVal <- read.csv("csv/CaseStudy2Validation.csv")
 
-head(dfTrain)
 ```
 ##Analysis
 ####We began our data analysis by plotting all the variables to identify the correlation and direction of the relationship between the pairs of variables. This was done in order to visually see if any one factor heavily contributed to Attrition. Below is a sample of the plotting done between Attrition and the other variables.
@@ -61,6 +60,7 @@ makereadyforplot <- function(df)
   as.data.frame(df2)
 }
 ```
+```[Chart 1: Plotting Attrition vs ...] ```
 
 #### Next we looked for the relationship between job role and the differing satisfaction metrics from the recent survey responses. For each of these we used Welch's ANOVA and Fisher's LSD (with Bonferroni correction).
 #### While there was not a statistical significance in job satisfaction beteen the roles (p-value 0.9079), Research Scientists and Healthcare Representatives both have the highest equal mean in job satisfaction at 2.80 in Medium-High range. Human Resources have the lowest mean at 2.57.
@@ -87,7 +87,9 @@ aov.js = aov(JobSatisfaction~JobRole,data=dfTrain.js)
 output.js.bon = LSD.test(aov.js,"JobRole", p.adj="bonferroni")
 output.js.bon$groups
 
-```
+``` 
+```[Chart 2: Job Satisfaction Analytics]```
+
 ####The mean environment satisfaction for all job roles is 2.71 in Medium-High range whereas Manufacturing Directors have the highest mean environment satisfaction at 2.90 and Research Directors have the lowest mean environment satisfaction at 2.39. The difference is not statistically significant at p-value 0.2330.
 ```{r environment_satisfaction_by_role, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Plot Environment Satisfaction by Role
@@ -111,6 +113,8 @@ aov.es = aov(EnvironmentSatisfaction~JobRole,data=dfTrain.es)
 output.es.bon = LSD.test(aov.es,"JobRole", p.adj="bonferroni")
 output.es.bon$groups
 ```
+```[Chart 3: Environment Satisfaction Analytics]```
+
 ####The mean relationship satisfaction for all job roles ranged from 2.50 to 2.77, albeit at a p-value 0.9362, the difference is not statistically significant between the roles. Managers have the highest mean relationship satisfaction whereas Sales Representatives have the lowest mean.
 ```{r relationship_satisfaction_by_role, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Plot Relationship Satisfaction by Role
@@ -134,6 +138,8 @@ aov.rs = aov(RelationshipSatisfaction~JobRole,data=dfTrain.rs)
 output.rs.bon = LSD.test(aov.rs,"JobRole", p.adj="bonferroni")
 output.rs.bon$groups
 ```
+```[Chart 4: Relationship Satisfaction Analytics]```
+
 ####55% or more of the survey responses within each job role suggest a better work life balance. Human Resources personnel have the highest mean at 3.0 compared to Research Scientists with the lowest mean work life balance at 2.67.
 ```{r worklifebalance_satisfaction_by_role, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Plot Work Life Balance by Role
@@ -157,9 +163,11 @@ aov.wlb = aov(WorkLifeBalance~JobRole,data=dfTrain.wlb)
 output.wlb.bon = LSD.test(aov.wlb,"JobRole", p.adj="bonferroni")
 output.wlb.bon$groups
 ```
+```[Chart 5: Work-Live Balance Analytics]```
+
 ##Prediction Conclusion
-####With an 87.3% overall accuracy, our custom regression model identified that
-business travel, commute distance, environment satisfaction, job involvement, job role, job satisfaction, marital status, number of companies worked, overtime, relationship satisfaction, and years at company are factors that contribute to attrition. Managing these factors in developing and retaining employees could reduce and prevent attrition.
+####With an 87.3% overall accuracy, our custom regression model identified that business travel, commute distance, environment satisfaction, job involvement, job role, job satisfaction, marital status, number of companies worked, overtime, and relationship satisfaction are factors that contribute to attrition. If instead one wishes for a slightly less complex model, another one was created with 85% accuracy. This model contains half the number of terms (five): job involvement, overtime, marital status, job role, and number of companies worked for. Managing these factors in developing and retaining employees could reduce and prevent attrition.
+
 ```{r predict, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Sets the reference level to 'No' so that it is predicting 'Yes'
 dfTrain$Attrition <- relevel(dfTrain$Attrition, ref = "No")
@@ -206,17 +214,22 @@ forw.model <- stepAIC(full.model, direction = c("forward"), trace=FALSE)
 #cust.model <- glm(Attrition~BusinessTravel + DistanceFromHome + EnvironmentSatisfaction + JobInvolvement + JobSatisfaction + MaritalStatus + NumCompaniesWorked + OverTime + TotalWorkingYears + WorkLifeBalance + YearsInCurrentRole + YearsSinceLastPromotion, data = dfTrain.train, family="binomial")
 
 #Custom Attrition w/Acc 87.3%
-cust.model <- glm(Attrition~BusinessTravel + DistanceFromHome + EnvironmentSatisfaction + JobInvolvement + JobRole + JobSatisfaction + MaritalStatus + NumCompaniesWorked + OverTime + RelationshipSatisfaction + YearsAtCompany, data = dfTrain.train, family="binomial")
+cust.model <- glm(Attrition~BusinessTravel + DistanceFromHome + EnvironmentSatisfaction + JobInvolvement + JobRole + JobSatisfaction + MaritalStatus + NumCompaniesWorked + OverTime + RelationshipSatisfaction, data = dfTrain.train, family="binomial")
+
+#Custom Attrition w/Acc 85%
+cust2.model <- glm(Attrition~JobInvolvement + OverTime + MaritalStatus + JobRole + NumCompaniesWorked, data = dfTrain.train, family="binomial") 
 
 #Tests the models
 #'WARNING: prediction from a rank-deficient fit may be misleading' suggest that we have too many explanatory variables
 pred.cust <- as.vector(predictyn(cust.model, dfTrain.test))
+pred.cust2 <- as.vector(predictyn(cust2.model, dfTrain.test))
 pred.step <- as.vector(predictyn(step.model, dfTrain.test))
 pred.back <- as.vector(predictyn(back.model, dfTrain.test))
 pred.forw <- as.vector(predictyn(forw.model, dfTrain.test))
 
 #Creates the confusion matrix with all those stats
 cust.mat <- confusionMatrix(table(dfTrain.test$Attrition, pred.cust))
+cust2.mat <- confusionMatrix(table(dfTrain.test$Attrition, pred.cust2))
 step.mat <- confusionMatrix(table(dfTrain.test$Attrition, pred.step))
 back.mat <- confusionMatrix(table(dfTrain.test$Attrition, pred.back))
 forw.mat <- confusionMatrix(table(dfTrain.test$Attrition, pred.forw))
@@ -227,15 +240,18 @@ forw.mat <- confusionMatrix(table(dfTrain.test$Attrition, pred.forw))
 #forw.mat
 
 #Prints out just the overall accuracy % of the models
-acc <- as.data.frame(cbind(cust.mat$overall[1]*100, step.mat$overall[1]*100, back.mat$overall[1]*100, forw.mat$overall[1]*100))
-names(acc) <- c("Custom", "Stepwise", "Backward", "Forward")
-numvar <- as.data.frame(cbind( (length(names(cust.model$model))-1), (length(names(step.model$model))-1), (length(names(back.model$model))-1), (length(names(forw.model$model))-1)))
-names(numvar) <- c("Custom", "Stepwise", "Backward", "Forward")
+acc <- as.data.frame(cbind(cust.mat$overall[1]*100, cust2.mat$overall[1]*100, step.mat$overall[1]*100, back.mat$overall[1]*100, forw.mat$overall[1]*100))
+names(acc) <- c("Custom", "Custom 2", "Stepwise", "Backward", "Forward")
+numvar <- as.data.frame(cbind( (length(names(cust.model$model))-1), (length(names(cust2.model$model))-1), (length(names(step.model$model))-1), (length(names(back.model$model))-1), (length(names(forw.model$model))-1)))
+names(numvar) <- c("Custom", "Custom 2", "Stepwise", "Backward", "Forward")
 model.info <- rbind(acc, numvar)
 rownames(model.info) <- c("Accuracy", "Num Terms")
 model.info
 #cust.mat$table
+```
+```[Chart 6: Accuracy and #Terms]```
 
+```{r writeit, echo=FALSE, warning=FALSE, message=FALSE, comment=NA }
 #---------------Choose the best prediction and write to file--------------
 #The custom model predictions for the file
 dfPreds <- as.data.frame( cbind( dfVal$ID, pred.cust ) )
