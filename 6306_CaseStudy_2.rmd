@@ -23,6 +23,8 @@ library(agricolae)
 #Reads in the files
 dfTrain <- read.csv("csv/CaseStudy2-data.csv")
 dfVal <- read.csv("csv/CaseStudy2Validation.csv")
+
+head(dfTrain)
 ```
 ##Analysis
 ####We began our data analysis by plotting all the variables to identify the correlation and direction of the relationship between the pairs of variables. This was done in order to visually see if any one factor heavily contributed to Attrition. Below is a sample of the plotting done between Attrition and the other variables.
@@ -156,7 +158,8 @@ output.wlb.bon = LSD.test(aov.wlb,"JobRole", p.adj="bonferroni")
 output.wlb.bon$groups
 ```
 ##Prediction Conclusion
-####With an 87.3% overall accuracy, our custom regression model identified that business travel, commute distance, job involvement, job role, marital status, number of companies worked, overtime, years at your company, years since last promotion, job satisfaction, relationship satisfaction, and environment satisfaction are factors that contribute to turnover. Managing these factors in developing and retaining employees could reduce and prevent attrition.
+####With an 87.3% overall accuracy, our custom regression model identified that
+business travel, commute distance, environment satisfaction, job involvement, job role, job satisfaction, marital status, number of companies worked, overtime, relationship satisfaction, and years at company are factors that contribute to attrition. Managing these factors in developing and retaining employees could reduce and prevent attrition.
 ```{r predict, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Sets the reference level to 'No' so that it is predicting 'Yes'
 dfTrain$Attrition <- relevel(dfTrain$Attrition, ref = "No")
