@@ -19,6 +19,8 @@ library(ggplot2)
 library(dplyr)
 library(onewaytests)
 library(agricolae)
+library(class)
+library(mlr)
 
 #Reads in the files
 dfTrain <- read.csv("csv/CaseStudy2-data.csv")
@@ -29,11 +31,11 @@ dfVal <- read.csv("csv/CaseStudy2Validation.csv")
 ####We began our data analysis by plotting all the variables to identify the correlation and direction of the relationship between the pairs of variables. This was done in order to visually see if any one factor heavily contributed to Attrition. Below is a sample of the plotting done between Attrition and the other variables.
 ```{r EDA, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #-------------Scatterplot matrices of all variables to identify correlations between pairs of variables within the data set-------------
-pairs(dfTrain[,c(3,2,4:8)])
+#pairs(dfTrain[,c(3,2,4:8)])
 #pairs(dfTrain[,c(3,9:16)])
 #pairs(dfTrain[,c(3,17:23)])
 #pairs(dfTrain[,c(3,24:30)])
-#pairs(dfTrain[,c(3,31:37)])
+pairs(dfTrain[,c(3,31:36)])
 
 #Back up the Over18 column for the future
 Over18.test <- dfTrain$Over18
@@ -63,7 +65,7 @@ makereadyforplot <- function(df)
 ```[Chart 1: Plotting Attrition vs ...] ```
 
 #### Next we looked for the relationship between job role and the differing satisfaction metrics from the recent survey responses. For each of these we used Welch's ANOVA and Fisher's LSD (with Bonferroni correction).
-#### While there was not a statistical significance in job satisfaction beteen the roles (p-value 0.9079), Research Scientists and Healthcare Representatives both have the highest equal mean in job satisfaction at 2.80 in Medium-High range. Human Resources have the lowest mean at 2.57.
+#### While there was not a statistical significance in job satisfaction beteen the roles (p-value 0.9079), Research Scientists and Healthcare Representatives both have the highest equal mean in job satisfaction at 2.80 in Medium-High range. Thirty-four percent (34%) of Research Scientists reported Very High job satisfaction whereas 35% of Healthcare Representatives reported the same. Human Resources have the lowest mean at 2.57 with 30% reporting High job satisfaction.
 ```{r job_satisfaction_by_role, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Gets only the rows we want and make sure they are always in the same order
 dfTrain.js <- dfTrain[,c("JobRole","JobSatisfaction")]
@@ -90,7 +92,7 @@ output.js.bon$groups
 ``` 
 ```[Chart 2: Job Satisfaction Analytics]```
 
-####The mean environment satisfaction for all job roles is 2.71 in Medium-High range whereas Manufacturing Directors have the highest mean environment satisfaction at 2.90 and Research Directors have the lowest mean environment satisfaction at 2.39. The difference is not statistically significant at p-value 0.2330.
+####The mean environment satisfaction for all job roles is 2.71 in Medium-High range. Manufacturing Directors have the highest mean environment satisfaction at 2.90 with 35% reported as Very High and Research Directors have the lowest mean environment satisfaction at 2.39 with 31% reported as Low. The difference is not statistically significant at p-value 0.2330.
 ```{r environment_satisfaction_by_role, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Plot Environment Satisfaction by Role
 dfTrain.es <- dfTrain[,c("JobRole","EnvironmentSatisfaction")]
@@ -115,7 +117,7 @@ output.es.bon$groups
 ```
 ```[Chart 3: Environment Satisfaction Analytics]```
 
-####The mean relationship satisfaction for all job roles ranged from 2.50 to 2.77, albeit at a p-value 0.9362, the difference is not statistically significant between the roles. Managers have the highest mean relationship satisfaction whereas Sales Representatives have the lowest mean.
+####The mean relationship satisfaction for all job roles ranged from 2.50 to 2.77. Albeit at a p-value 0.9362, there is not sufficient evidence to suggest that the difference is statistically significant between the roles. Managers have the highest mean relationship satisfaction with 33% reported as Very High whereas Sales Representatives have the lowest mean with a reported 26% Low to and 28% High.
 ```{r relationship_satisfaction_by_role, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Plot Relationship Satisfaction by Role
 dfTrain.rs <- dfTrain[,c("JobRole","RelationshipSatisfaction")]
@@ -140,7 +142,7 @@ output.rs.bon$groups
 ```
 ```[Chart 4: Relationship Satisfaction Analytics]```
 
-####55% or more of the survey responses within each job role suggest a better work life balance. Human Resources personnel have the highest mean at 3.0 compared to Research Scientists with the lowest mean work life balance at 2.67.
+####Fifty-five percent (55%) or more of the survey responses within each job role suggest a better work life balance. Human Resources personnel have the highest mean at 3.0 compared to Research Scientists with the lowest mean work life balance at 2.67. However, the p-value of 0.07 suggests that there may not be sufficient statistical evidence for its signifcance with the different roles.
 ```{r worklifebalance_satisfaction_by_role, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Plot Work Life Balance by Role
 dfTrain.wlb <- dfTrain[,c("JobRole","WorkLifeBalance")]
@@ -260,3 +262,44 @@ names(dfPreds) <- c("ID", "Attrition")
 write.csv(dfPreds, "Case2PredictionsGillTran.csv", row.names = FALSE)
 ```
 
+```{r knn}
+#KNN using class package 
+
+#knn.model2 <- class::knn(train_transformed, test_tranformed, dfTrain.train$Attrition, k=34)
+
+#Returns "Error in class::knn(dfTrain.train[, c(3, 15, 17, 19, 22, 24)], dfTrain.test[,  : NA/NaN/Inf in foreign function call (arg 6)"
+
+#dfTrain.test$knnpred <- factor(knn.model2)
+#confusionMatrix(table(dfTrain.test$Attrition,dfTrain.test$knnpred))
+
+
+
+#KNN using caret and mlr packages where k=34 from sqrt(1170)
+
+#knn.model <- knnreg(Attrition~JobInvolvement + OverTime + MaritalStatus + JobRole + NumCompaniesWorked, data = dfTrain.train,k=34)
+#dfTrain.test$knn <- predict(knn.model,dfTrain.test)
+#confusionMatrix(table(dfTrain.test$knn,dfTrain.test$Attrition))
+
+#Returns "Error in !all.equal(nrow(data), ncol(data)) : invalid argument type"
+
+
+
+#Converting every categorical variable to numerical using dummy variables
+dmy.train <- dummyVars(" ~ .", data = dfTrain.train,fullRank = T)
+train_transformed <- data.frame(predict(dmy.train, newdata = dfTrain.train))
+str(train_transformed)
+
+dmy.test <- dummyVars(" ~ .", data = dfTrain.test,fullRank = T)
+test_transformed <- data.frame(predict(dmy.test, newdata = dfTrain.test))
+str(test_transformed)
+
+knn.model <- knnreg(train_transformed, train_transformed$Attrition, k=34)
+test_transformed$knn <- predict(knn.model,test_transformed)
+
+test_transformed$knn
+
+knn.mat <- confusionMatrix(table(test_transformed$Attrition,test_transformed$knn))
+#Returns "Error in !all.equal(nrow(data), ncol(data)) : invalid argument type"
+knn.mat
+
+```
