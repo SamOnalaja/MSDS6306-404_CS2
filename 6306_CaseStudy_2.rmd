@@ -262,44 +262,15 @@ names(dfPreds) <- c("ID", "Attrition")
 write.csv(dfPreds, "Case2PredictionsGillTran.csv", row.names = FALSE)
 ```
 
-```{r knn}
-#KNN using class package 
+```{r knn, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+#KNN 2.0
+library(caret)
 
-#knn.model2 <- class::knn(train_transformed, test_tranformed, dfTrain.train$Attrition, k=34)
+dfTrain.knn <- dfTrain[,c(3,17,19,22,23)]
+knn.model <- caret::train(Attrition~. , data = dfTrain.knn, method = "knn", preProcess = c("center", "scale"))
+knn.pred <- predict(knn.model, newdata = dfVal)
 
-#Returns "Error in class::knn(dfTrain.train[, c(3, 15, 17, 19, 22, 24)], dfTrain.test[,  : NA/NaN/Inf in foreign function call (arg 6)"
-
-#dfTrain.test$knnpred <- factor(knn.model2)
-#confusionMatrix(table(dfTrain.test$Attrition,dfTrain.test$knnpred))
-
-
-
-#KNN using caret and mlr packages where k=34 from sqrt(1170)
-
-#knn.model <- knnreg(Attrition~JobInvolvement + OverTime + MaritalStatus + JobRole + NumCompaniesWorked, data = dfTrain.train,k=34)
-#dfTrain.test$knn <- predict(knn.model,dfTrain.test)
-#confusionMatrix(table(dfTrain.test$knn,dfTrain.test$Attrition))
-
-#Returns "Error in !all.equal(nrow(data), ncol(data)) : invalid argument type"
-
-
-
-#Converting every categorical variable to numerical using dummy variables
-dmy.train <- dummyVars(" ~ .", data = dfTrain.train,fullRank = T)
-train_transformed <- data.frame(predict(dmy.train, newdata = dfTrain.train))
-str(train_transformed)
-
-dmy.test <- dummyVars(" ~ .", data = dfTrain.test,fullRank = T)
-test_transformed <- data.frame(predict(dmy.test, newdata = dfTrain.test))
-str(test_transformed)
-
-knn.model <- knnreg(train_transformed, train_transformed$Attrition, k=34)
-test_transformed$knn <- predict(knn.model,test_transformed)
-
-test_transformed$knn
-
-knn.mat <- confusionMatrix(table(test_transformed$Attrition,test_transformed$knn))
-#Returns "Error in !all.equal(nrow(data), ncol(data)) : invalid argument type"
+knn.mat <- confusionMatrix(table(dfVal$Attrition, knn.pred))
 knn.mat
 
 ```
