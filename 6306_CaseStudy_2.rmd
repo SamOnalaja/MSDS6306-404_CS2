@@ -1,12 +1,12 @@
 ---
 title: "Talent Management"
 author: "Mai Loan Tran, Zackary Gill"
-date: "December 3, 2018"
+date: "December 8, 2018"
 output: html_document
 ---
 
 ##Executive Summary
-#### Talent management is an iterative process of developing and retaining employees. Our analysis yielded that there are ten (10) factors that contribute to turnover with an overall 87.3% accuracy. While there were positive relationships between the varying satisfaction metrics recently collected by job roles, the differences were not statistically significant.
+#### Talent management is an iterative process of developing and retaining employees. Our analysis yielded ten (10) factors that contribute to turnover with an overall 87.3% accuracy. While there were positive relationships between the varying satisfaction metrics recently collected by job roles, the differences were not statistically significant. The final model was constructed using logistic regression although we also explored K Nearest Neighbor as an alternative model.
 
 ##Introduction
 #### DDSAnalytics is tasked with predicting employee turnover by conducting an analysis of employee data for the purpose of talent management. While seeking to determine factors that lead to attrition and identify job role specific trends, our deliverable is to build a model to predict attrition with at least 60% accuracy.
@@ -19,8 +19,8 @@ library(ggplot2)
 library(dplyr)
 library(onewaytests)
 library(agricolae)
-library(class)
-library(mlr)
+#library(class)
+#library(mlr)
 
 #Reads in the files
 dfTrain <- read.csv("csv/CaseStudy2-data.csv")
@@ -28,7 +28,7 @@ dfVal <- read.csv("csv/CaseStudy2Validation.csv")
 
 ```
 ##Analysis
-####We began our data analysis by plotting all the variables to identify the correlation and direction of the relationship between the pairs of variables. This was done in order to visually see if any one factor heavily contributed to Attrition. Below is a sample of the plotting done between Attrition and the other variables.
+####We began our data analysis by plotting all the variables [Chart 1] to identify the correlation and direction of the relationship between the pairs of variables. This was done in order to visually see if any one factor heavily contributed to Attrition. Below is a sample of the plotting done between Attrition and the other variables.
 ```{r EDA, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #-------------Scatterplot matrices of all variables to identify correlations between pairs of variables within the data set-------------
 #pairs(dfTrain[,c(3,2,4:8)])
@@ -65,7 +65,7 @@ makereadyforplot <- function(df)
 ```[Chart 1: Plotting Attrition vs ...] ```
 
 #### Next we looked for the relationship between job role and the differing satisfaction metrics from the recent survey responses. For each of these we used Welch's ANOVA and Fisher's LSD (with Bonferroni correction).
-#### While there was not a statistical significance in job satisfaction beteen the roles (p-value 0.9079), Research Scientists and Healthcare Representatives both have the highest equal mean in job satisfaction at 2.80 in Medium-High range. Thirty-four percent (34%) of Research Scientists reported Very High job satisfaction whereas 35% of Healthcare Representatives reported the same. Human Resources have the lowest mean at 2.57 with 30% reporting High job satisfaction.
+#### While there was not a statistical significance in job satisfaction beteen the roles (p-value 0.9079), Research Scientists and Healthcare Representatives [Chart 2] both have the highest equal mean in job satisfaction at 2.80 in Medium-High range. Thirty-four percent (34%) of Research Scientists reported Very High job satisfaction whereas 35% of Healthcare Representatives reported the same. Human Resources have the lowest mean at 2.57 with 30% reporting High job satisfaction.
 ```{r job_satisfaction_by_role, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Gets only the rows we want and make sure they are always in the same order
 dfTrain.js <- dfTrain[,c("JobRole","JobSatisfaction")]
@@ -92,7 +92,7 @@ output.js.bon$groups
 ``` 
 ```[Chart 2: Job Satisfaction Analytics]```
 
-####The mean environment satisfaction for all job roles is 2.71 in Medium-High range. Manufacturing Directors have the highest mean environment satisfaction at 2.90 with 35% reported as Very High and Research Directors have the lowest mean environment satisfaction at 2.39 with 31% reported as Low. The difference is not statistically significant at p-value 0.2330.
+####The mean environment satisfaction for all job roles is 2.71 in Medium-High range [Chart 3]. Manufacturing Directors have the highest mean environment satisfaction at 2.90 with 35% reported as Very High and Research Directors have the lowest mean environment satisfaction at 2.39 with 31% reported as Low. The difference is not statistically significant at p-value 0.2330.
 ```{r environment_satisfaction_by_role, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Plot Environment Satisfaction by Role
 dfTrain.es <- dfTrain[,c("JobRole","EnvironmentSatisfaction")]
@@ -117,7 +117,7 @@ output.es.bon$groups
 ```
 ```[Chart 3: Environment Satisfaction Analytics]```
 
-####The mean relationship satisfaction for all job roles ranged from 2.50 to 2.77. Albeit at a p-value 0.9362, there is not sufficient evidence to suggest that the difference is statistically significant between the roles. Managers have the highest mean relationship satisfaction with 33% reported as Very High whereas Sales Representatives have the lowest mean with a reported 26% Low to and 28% High.
+####The mean relationship satisfaction for all job roles ranged from 2.50 to 2.77 [Chart 4]. Albeit at a p-value 0.9362, there is not sufficient evidence to suggest that the difference is statistically significant between the roles. Managers have the highest mean relationship satisfaction with 33% reported as Very High whereas Sales Representatives have the lowest mean with a reported 26% Low to and 28% High.
 ```{r relationship_satisfaction_by_role, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Plot Relationship Satisfaction by Role
 dfTrain.rs <- dfTrain[,c("JobRole","RelationshipSatisfaction")]
@@ -142,7 +142,7 @@ output.rs.bon$groups
 ```
 ```[Chart 4: Relationship Satisfaction Analytics]```
 
-####Fifty-five percent (55%) or more of the survey responses within each job role suggest a better work life balance. Human Resources personnel have the highest mean at 3.0 compared to Research Scientists with the lowest mean work life balance at 2.67. However, the p-value of 0.07 suggests that there may not be sufficient statistical evidence for its signifcance with the different roles.
+####Fifty-five percent (55%) or more of the survey responses within each job role suggest a better work life balance [Chart 5]. Human Resources personnel have the highest mean at 3.0 compared to Research Scientists with the lowest mean work life balance at 2.67. However, the p-value of 0.07 suggests that there may not be sufficient statistical evidence for its signifcance with the different roles.
 ```{r worklifebalance_satisfaction_by_role, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Plot Work Life Balance by Role
 dfTrain.wlb <- dfTrain[,c("JobRole","WorkLifeBalance")]
@@ -167,8 +167,23 @@ output.wlb.bon$groups
 ```
 ```[Chart 5: Work-Live Balance Analytics]```
 
+```{r knn, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+#----------------------------------KNN 2.0-----------------------------
+#JobInvolvement + OverTime + MaritalStatus + JobRole + NumCompaniesWorked
+dfTrain.knn <- dfTrain[,c(3,15,17,19,22,23)]
+knn.model <- caret::train(Attrition ~ ., data = dfTrain.knn, method = "knn", preProcess = c("center", "scale"))
+knn.pred <- predict(knn.model, newdata = dfVal)
+
+knn.mat <- confusionMatrix(table(dfVal$Attrition, knn.pred))
+aaaa <- data.frame(knn.mat$byClass[1],knn.mat$byClass[2],knn.mat$overall[1])
+row.names(aaaa) <- NULL
+names(aaaa) <- c( "Specificity", "Sensitivity","Accuracy")
+aaaa
+```
+```[Chart 6: kNN Modeling]```
+
 ##Prediction Conclusion
-####With an 87.3% overall accuracy, our custom regression model identified that business travel, commute distance, environment satisfaction, job involvement, job role, job satisfaction, marital status, number of companies worked, overtime, and relationship satisfaction are factors that contribute to attrition. If instead one wishes for a slightly less complex model, another one was created with 85% accuracy. This model contains half the number of terms (five): job involvement, overtime, marital status, job role, and number of companies worked for. Managing these factors in developing and retaining employees could reduce and prevent attrition.
+####With an 87.3% overall accuracy [Chart 7], our custom logistic regression model identified that business travel, commute distance, environment satisfaction, job involvement, job role, job satisfaction, marital status, number of companies worked, overtime, and relationship satisfaction are factors that contribute to attrition. For a less complex model, we evaluated both a logistic regression with 85% accuracy [Chart 7] and a kNN model with 84% accuracy [Chart 6]. These models contains half the number of terms (five): job involvement, overtime, marital status, job role, and number of companies worked for. Managing these factors in developing and retaining employees could reduce and prevent attrition.
 
 ```{r predict, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #Sets the reference level to 'No' so that it is predicting 'Yes'
@@ -244,14 +259,24 @@ forw.mat <- confusionMatrix(table(dfTrain.test$Attrition, pred.forw))
 #Prints out just the overall accuracy % of the models
 acc <- as.data.frame(cbind(cust.mat$overall[1]*100, cust2.mat$overall[1]*100, step.mat$overall[1]*100, back.mat$overall[1]*100, forw.mat$overall[1]*100))
 names(acc) <- c("Custom", "Custom 2", "Stepwise", "Backward", "Forward")
+
 numvar <- as.data.frame(cbind( (length(names(cust.model$model))-1), (length(names(cust2.model$model))-1), (length(names(step.model$model))-1), (length(names(back.model$model))-1), (length(names(forw.model$model))-1)))
 names(numvar) <- c("Custom", "Custom 2", "Stepwise", "Backward", "Forward")
-model.info <- rbind(acc, numvar)
-rownames(model.info) <- c("Accuracy", "Num Terms")
+
+#knn.mat$byClass[1],knn.mat$byClass[2],knn.mat$overall[1])
+spec <- as.data.frame(cbind(cust.mat$byClass[1]*100, cust2.mat$byClass[1]*100, step.mat$byClass[1]*100, back.mat$byClass[1]*100, forw.mat$byClass[1]*100))
+names(spec) <- c("Custom", "Custom 2", "Stepwise", "Backward", "Forward")
+
+sens <- as.data.frame(cbind(cust.mat$byClass[2]*100, cust2.mat$byClass[2]*100, step.mat$byClass[2]*100, back.mat$byClass[2]*100, forw.mat$byClass[2]*100))
+names(sens) <- c("Custom", "Custom 2", "Stepwise", "Backward", "Forward")
+
+model.info <- rbind(acc, sens, spec, numvar)
+
+rownames(model.info) <- c("Accuracy", "Specificity", "Sensitivity", "Num Terms")
 model.info
 #cust.mat$table
 ```
-```[Chart 6: Accuracy and #Terms]```
+```[Chart 7: Accuracy and #Terms]```
 
 ```{r writeit, echo=FALSE, warning=FALSE, message=FALSE, comment=NA }
 #---------------Choose the best prediction and write to file--------------
@@ -260,17 +285,4 @@ dfPreds <- as.data.frame( cbind( dfVal$ID, pred.cust ) )
 names(dfPreds) <- c("ID", "Attrition")
 
 write.csv(dfPreds, "Case2PredictionsGillTran.csv", row.names = FALSE)
-```
-
-```{r knn, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
-#KNN 2.0
-library(caret)
-
-dfTrain.knn <- dfTrain[,c(3,17,19,22,23)]
-knn.model <- caret::train(Attrition~. , data = dfTrain.knn, method = "knn", preProcess = c("center", "scale"))
-knn.pred <- predict(knn.model, newdata = dfVal)
-
-knn.mat <- confusionMatrix(table(dfVal$Attrition, knn.pred))
-knn.mat
-
 ```
