@@ -175,9 +175,9 @@ knn.model <- caret::train(Attrition ~ ., data = dfTrain.knn, method = "knn", pre
 knn.pred <- predict(knn.model, newdata = dfVal)
 
 knn.mat <- confusionMatrix(table(dfVal$Attrition, knn.pred))
-aaaa <- data.frame(knn.mat$byClass[1],knn.mat$byClass[2],knn.mat$overall[1])
+aaaa <- data.frame(knn.mat$overall[1],knn.mat$byClass[2],knn.mat$byClass[1])
 row.names(aaaa) <- NULL
-names(aaaa) <- c( "Specificity", "Sensitivity","Accuracy")
+names(aaaa) <- c("Accuracy", "Specificity", "Sensitivity")
 aaaa
 ```
 ```[Chart 6: kNN Modeling]```
