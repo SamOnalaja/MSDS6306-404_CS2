@@ -3,8 +3,7 @@ title: "Talent Management"
 author: "Mai Loan Tran, Zackary Gill"
 date: "December 8, 2018"
 output: html_document
-YouTube Video
-Gill:
+Gill: https://youtu.be/L2MqJn9BWqw
 Tran: https://www.youtube.com/watch?v=gYZH6v3FLzw&feature=youtu.be
 ---
 
